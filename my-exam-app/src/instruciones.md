@@ -344,140 +344,181 @@ npm run dev
 
 
 
-🧩 Home.jsx (Dragon Ball, 6 personajes)
-jsx
+# 🐉 Dragon Ball API - Configuración Completa
+
+## 📌 URL Base
+https://dragonball-api.com/api/characters
+
+text
+
+Respuesta: `{"items": [...], "meta": {...}, "links": {...}}`
+
+---
+
+## 📁 Archivos a modificar
+
+### 1. `src/store/store.js` (NO CAMBIA)
+
+import { create } from 'zustand';
+
+export const useStore = create((set) => ({
+items: [],
+setItems: (items) => set({ items }),
+}));
+
+text
+
+---
+
+### 2. `src/pages/Home.jsx`
+
 import { useEffect } from 'react';
 import { useStore } from '../store/store';
 import CardList from '../components/CardList';
 
 const Home = () => {
-  const { items, setItems } = useStore();
+const { items, setItems } = useStore();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const response = await fetch('https://dragonball-api.com/api/characters?page=1&limit=6');
-      const data = await response.json();              // data.items existe
-      setItems(data.items);                            // ⚠ usar data.items
-    };
+useEffect(() => {
+const fetchData = async () => {
+const response = await fetch('https://dragonball-api.com/api/characters?page=1&limit=6');
+const data = await response.json();
+setItems(data.items); // ⚠️ usar data.items
+};
 
-    if (items.length === 0) {
-      fetchData();
-    }
-  }, []);
+text
+if (items.length === 0) {
+  fetchData();
+}
+}, []);
 
-  return (
-    <div className="container py-5">
-      <div className="text-center mb-5">
-        <h1 className="display-4">Dragon Ball App</h1>
-        <p className="lead">Consuming Dragon Ball API with Zustand</p>
-      </div>
-      <CardList items={items} />
-    </div>
-  );
+return (
+<div className="container py-5">
+<div className="text-center mb-5">
+<h1 className="display-4">Dragon Ball App</h1>
+<p className="lead">Consuming Dragon Ball API with Zustand</p>
+</div>
+<CardList items={items} />
+</div>
+);
 };
 
 export default Home;
-📋 Entities.jsx (listado con paginación real)
-jsx
+
+text
+
+---
+
+### 3. `src/pages/Entities.jsx`
+
 import { useEffect, useState } from 'react';
 import { useStore } from '../store/store';
 import CardList from '../components/CardList';
 
 const Entities = () => {
-  const { items, setItems } = useStore();
-  const [page, setPage] = useState(1);
-  const limit = 12;
+const { items, setItems } = useStore();
+const [page, setPage] = useState(1);
+const limit = 12;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const url = `https://dragonball-api.com/api/characters?page=${page}&limit=${limit}`;
-      const response = await fetch(url);
-      const data = await response.json();
+useEffect(() => {
+const fetchData = async () => {
+const url = https://dragonball-api.com/api/characters?page=${page}&limit=${limit};
+const response = await fetch(url);
+const data = await response.json();
 
-      // ⚠ items es un array, meta tiene totalPages, etc.
-      if (Array.isArray(data.items)) {
-        setItems(data.items);
-      } else {
-        setItems([]);  // seguridad por si algo falla
-      }
-    };
+text
+  if (Array.isArray(data.items)) {
+    setItems(data.items);
+  } else {
+    setItems([]);
+  }
+};
 
-    fetchData();
-  }, [page]);
+fetchData();
+}, [page]);
 
-  return (
-    <div className="container py-5">
-      <h2 className="mb-4">All Characters</h2>
+return (
+<div className="container py-5">
+<h2 className="mb-4">All Characters</h2>
 
-      <CardList items={items} />
+text
+  <CardList items={items} />
 
-      <div className="d-flex justify-content-center gap-2 mt-4">
-        <button
-          className="btn btn-primary"
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-        >
-          Previous
-        </button>
-        <span className="btn btn-outline-secondary disabled">
-          Page {page}
-        </span>
-        <button
-          className="btn btn-primary"
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  );
+  <div className="d-flex justify-content-center gap-2 mt-4">
+    <button
+      className="btn btn-primary"
+      onClick={() => setPage((p) => Math.max(1, p - 1))}
+      disabled={page === 1}
+    >
+      Previous
+    </button>
+    <span className="btn btn-outline-secondary disabled">
+      Page {page}
+    </span>
+    <button
+      className="btn btn-primary"
+      onClick={() => setPage((p) => p + 1)}
+    >
+      Next
+    </button>
+  </div>
+</div>
+);
 };
 
 export default Entities;
-Puntos clave para que el listado funcione:
 
-Usar exactamente https://dragonball-api.com/api/characters?page=${page}&limit=${limit} (sin ? suelto).​
+text
 
-Leer siempre data.items, no data.results ni data directo.​
+---
 
-Comprobar que data.items es array antes de usarlo, para evitar errores como slice is not a function.
+### 4. `src/components/CardList.jsx`
 
-🧱 CardList.jsx y Card.jsx (por si acaso)
-CardList.jsx
-jsx
 import Card from './Card';
 
 const CardList = ({ items }) => {
-  return (
-    <div className="row row-cols-1 row-cols-md-3 g-4">
-      {items.map((item) => (
-        <Card key={item.id} item={item} />
-      ))}
-    </div>
-  );
+return (
+<div className="row row-cols-1 row-cols-md-3 g-4">
+{items.map((item) => (
+<Card key={item.id} item={item} />
+))}
+</div>
+);
 };
 
 export default CardList;
-Card.jsx
-jsx
+
+text
+
+---
+
+### 5. `src/components/Card.jsx`
+
 const Card = ({ item }) => {
-  return (
-    <div className="col">
-      <div className="card h-100">
-        <img
-          src={item.image}
-          alt={item.name}
-          className="card-img-top"
-          style={{ height: '220px', objectFit: 'cover' }}
-        />
-        <div className="card-body">
-          <h5 className="card-title">{item.name}</h5>
-          <p className="card-text mb-1">Race: {item.race}</p>
-          <p className="card-text mb-0">Ki: {item.ki}</p>
-        </div>
-      </div>
-    </div>
-  );
+return (
+<div className="col">
+<div className="card h-100">
+<img
+src={item.image}
+alt={item.name}
+className="card-img-top"
+style={{ height: '220px', objectFit: 'cover' }}
+/>
+<div className="card-body">
+<h5 className="card-title">{item.name}</h5>
+<p className="card-text mb-1">
+<strong>Race:</strong> {item.race}
+</p>
+<p className="card-text mb-1">
+<strong>Ki:</strong> {item.ki}
+</p>
+<p className="card-text mb-0">
+<strong>Gender:</strong> {item.gender}
+</p>
+</div>
+</div>
+</div>
+);
 };
 
 export default Card;
