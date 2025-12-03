@@ -344,126 +344,140 @@ npm run dev
 
 
 
-🎌 API de Banderas (REST Countries)
-URL: https://restcountries.com/v3.1/all
+🧩 Home.jsx (Dragon Ball, 6 personajes)
+jsx
+import { useEffect } from 'react';
+import { useStore } from '../store/store';
+import CardList from '../components/CardList';
 
-Cambios en el fetch:
-jsx
-const response = await fetch('https://restcountries.com/v3.1/all');
-const data = await response.json();
-setItems(data.slice(0, 20)); // No tiene .results
-Cambios en Card.jsx:
-jsx
-const Card = ({ item }) => {
+const Home = () => {
+  const { items, setItems } = useStore();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch('https://dragonball-api.com/api/characters?page=1&limit=6');
+      const data = await response.json();              // data.items existe
+      setItems(data.items);                            // ⚠ usar data.items
+    };
+
+    if (items.length === 0) {
+      fetchData();
+    }
+  }, []);
+
   return (
-    <div className="col">
-      <div className="card h-100">
-        <img 
-          src={item.flags.png} 
-          className="card-img-top" 
-          alt={item.name.common}
-          style={{height: '150px', objectFit: 'cover'}}
-        />
-        <div className="card-body">
-          <h5 className="card-title">{item.name.common}</h5>
-          <p className="card-text">Capital: {item.capital?.[0] || 'N/A'}</p>
-          <p className="card-text">Population: {item.population.toLocaleString()}</p>
-        </div>
+    <div className="container py-5">
+      <div className="text-center mb-5">
+        <h1 className="display-4">Dragon Ball App</h1>
+        <p className="lead">Consuming Dragon Ball API with Zustand</p>
+      </div>
+      <CardList items={items} />
+    </div>
+  );
+};
+
+export default Home;
+📋 Entities.jsx (listado con paginación real)
+jsx
+import { useEffect, useState } from 'react';
+import { useStore } from '../store/store';
+import CardList from '../components/CardList';
+
+const Entities = () => {
+  const { items, setItems } = useStore();
+  const [page, setPage] = useState(1);
+  const limit = 12;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const url = `https://dragonball-api.com/api/characters?page=${page}&limit=${limit}`;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      // ⚠ items es un array, meta tiene totalPages, etc.
+      if (Array.isArray(data.items)) {
+        setItems(data.items);
+      } else {
+        setItems([]);  // seguridad por si algo falla
+      }
+    };
+
+    fetchData();
+  }, [page]);
+
+  return (
+    <div className="container py-5">
+      <h2 className="mb-4">All Characters</h2>
+
+      <CardList items={items} />
+
+      <div className="d-flex justify-content-center gap-2 mt-4">
+        <button
+          className="btn btn-primary"
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+        >
+          Previous
+        </button>
+        <span className="btn btn-outline-secondary disabled">
+          Page {page}
+        </span>
+        <button
+          className="btn btn-primary"
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </button>
       </div>
     </div>
   );
 };
-🐉 API Dragon Ball
-URL: https://dragonball-api.com/api/characters
 
-Cambios en el fetch:
+export default Entities;
+Puntos clave para que el listado funcione:
+
+Usar exactamente https://dragonball-api.com/api/characters?page=${page}&limit=${limit} (sin ? suelto).​
+
+Leer siempre data.items, no data.results ni data directo.​
+
+Comprobar que data.items es array antes de usarlo, para evitar errores como slice is not a function.
+
+🧱 CardList.jsx y Card.jsx (por si acaso)
+CardList.jsx
 jsx
-const response = await fetch('https://dragonball-api.com/api/characters?limit=20');
-const data = await response.json();
-setItems(data.items); // Usa .items
-Cambios en Card.jsx:
+import Card from './Card';
+
+const CardList = ({ items }) => {
+  return (
+    <div className="row row-cols-1 row-cols-md-3 g-4">
+      {items.map((item) => (
+        <Card key={item.id} item={item} />
+      ))}
+    </div>
+  );
+};
+
+export default CardList;
+Card.jsx
 jsx
 const Card = ({ item }) => {
   return (
     <div className="col">
       <div className="card h-100">
-        <img 
-          src={item.image} 
-          className="card-img-top" 
+        <img
+          src={item.image}
           alt={item.name}
-          style={{height: '250px', objectFit: 'cover'}}
+          className="card-img-top"
+          style={{ height: '220px', objectFit: 'cover' }}
         />
         <div className="card-body">
           <h5 className="card-title">{item.name}</h5>
-          <p className="card-text">Race: {item.race}</p>
-          <p className="card-text">Ki: {item.ki}</p>
+          <p className="card-text mb-1">Race: {item.race}</p>
+          <p className="card-text mb-0">Ki: {item.ki}</p>
         </div>
       </div>
     </div>
   );
 };
-🐱 API de Pokémon
-URL: https://pokeapi.co/api/v2/pokemon?limit=20
 
-Cambios en el fetch (requiere doble fetch):
-jsx
-const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=20');
-const data = await response.json();
-
-const detailed = await Promise.all(
-  data.results.map(async (p) => {
-    const res = await fetch(p.url);
-    return res.json();
-  })
-);
-setItems(detailed);
-Cambios en Card.jsx:
-jsx
-const Card = ({ item }) => {
-  return (
-    <div className="col">
-      <div className="card h-100">
-        <img 
-          src={item.sprites.front_default} 
-          className="card-img-top bg-light" 
-          alt={item.name}
-          style={{height: '200px', objectFit: 'contain'}}
-        />
-        <div className="card-body">
-          <h5 className="card-title text-capitalize">{item.name}</h5>
-          <p className="card-text">Type: {item.types[0].type.name}</p>
-          <p className="card-text">Height: {item.height}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-🍺 API de Cervezas
-URL: https://api.punkapicom/v2/beers
-
-Cambios en el fetch:
-jsx
-const response = await fetch('https://api.punkapi.com/v2/beers?page=1&per_page=20');
-const data = await response.json();
-setItems(data); // Es array directo
-Cambios en Card.jsx:
-jsx
-const Card = ({ item }) => {
-  return (
-    <div className="col">
-      <div className="card h-100">
-        <img 
-          src={item.image_url} 
-          className="card-img-top p-3" 
-          alt={item.name}
-          style={{height: '200px', objectFit: 'contain'}}
-        />
-        <div className="card-body">
-          <h5 className="card-title">{item.name}</h5>
-          <p className="card-text">{item.tagline}</p>
-          <p className="card-text">ABV: {item.abv}%</p>
-        </div>
-      </div>
-    </div>
-  );
-};
+export default Card;
